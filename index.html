@@ -53,8 +53,8 @@
             padding: 10px;
             margin: 5px 0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
         }
     </style>
 </head>
@@ -103,7 +103,7 @@
             const quantity = document.getElementById('itemQuantity').value;
             if (name && quantity) {
                 items.push({ name, quantity });
-                purchased.push({ name, quantity, boughtQuantity: 0, price: 0 });
+                purchased.push({ name, quantity, boughtQuantity: 0, price: "0,00" });
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQuantity').value = '';
                 saveData();
@@ -125,20 +125,20 @@
             list.innerHTML = '';
             totalSpent = 0;
             purchased.forEach((item, index) => {
-                totalSpent += item.boughtQuantity * item.price;
+                totalSpent += item.boughtQuantity * parseFloat(item.price.replace(',', '.'));
                 list.innerHTML += `<li>
                     ${item.name} <br>
                     Qtd: <input type="number" value="${item.boughtQuantity}" oninput="updatePurchased(${index}, 'boughtQuantity', this.value)">
-                    Preço: <input type="number" value="${item.price}" oninput="updatePurchased(${index}, 'price', this.value)">
+                    Preço: <input type="text" value="${item.price}" oninput="updatePurchased(${index}, 'price', this.value.replace(',', '.'))">
                     <button onclick="removePurchased(${index})">Excluir</button>
                 </li>`;
             });
-            document.getElementById('totalSpent').textContent = totalSpent.toFixed(2);
+            document.getElementById('totalSpent').textContent = totalSpent.toFixed(2).replace('.', ',');
             checkWarning();
         }
 
         function updatePurchased(index, field, value) {
-            purchased[index][field] = parseFloat(value) || 0;
+            purchased[index][field] = field === 'price' ? value.replace('.', ',') : parseFloat(value) || 0;
             saveData();
             renderPurchased();
         }
