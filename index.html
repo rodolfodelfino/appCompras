@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background: #2C3E50;
+            color: white;
+            padding: 10px;
+        }
+        .logo {
+            max-width: 100px;
+        }
+        main {
+            padding: 20px;
+        }
+        section {
+            background: white;
+            padding: 15px;
+            margin: 10px auto;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #E67E22;
+            color: white;
+            cursor: pointer;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="img/carrinho.png" alt="Logotipo" class="logo">
+        <h1>Lista de Compras</h1>
+    </header>
+    <main>
+        <section class="add-item">
+            <h2>Adicionar Item</h2>
+            <input type="text" id="itemName" placeholder="Nome do Item">
+            <input type="number" id="itemQuantity" placeholder="Quantidade">
+            <button onclick="addItem()">Adicionar</button>
+        </section>
+        
+        <section class="shopping-list">
+            <h2>Lista de Compras</h2>
+            <ul id="list"></ul>
+        </section>
+
+        <section class="purchase">
+            <h2>Itens Comprados</h2>
+            <input type="number" id="budget" placeholder="Defina seu orçamento" oninput="updateBudget()">
+            <ul id="purchased"></ul>
+            <p>Total Gasto: <span id="totalSpent">0</span></p>
+            <p id="warning"></p>
+            <button onclick="resetList()">Resetar Lista</button>
+        </section>
+    </main>
+    
+    <script>
+        let items = JSON.parse(localStorage.getItem('items')) || [];
+        let purchased = JSON.parse(localStorage.getItem('purchased')) || [];
+        let budget = parseFloat(localStorage.getItem('budget')) || 0;
+        let totalSpent = 0;
+
+        function saveData() {
+            localStorage.setItem('items', JSON.stringify(items));
+            localStorage.setItem('purchased', JSON.stringify(purchased));
+            localStorage.setItem('budget', budget);
+        }
+
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const quantity = document.getElementById('itemQuantity').value;
+            if (name && quantity) {
+                items.push({ name, quantity });
+                purchased.push({ name, quantity, boughtQuantity: 0, price: 0 });
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemQuantity').value = '';
+                saveData();
+                renderList();
+                renderPurchased();
+            }
+        }
+
+        function renderList() {
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            items.forEach((item, index) => {
+                list.innerHTML += `<li>${item.name} (${item.quantity}) <button onclick="removeItem(${index})">Remover</button></li>`;
+            });
+        }
+
+        function renderPurchased() {
+            const list = document.getElementById('purchased');
+            list.innerHTML = '';
+            totalSpent = 0;
+            purchased.forEach((item, index) => {
+                totalSpent += item.boughtQuantity * item.price;
+                list.innerHTML += `<li>
+                    ${item.name} <br>
+                    Qtd: <input type="number" value="${item.boughtQuantity}" oninput="updatePurchased(${index}, 'boughtQuantity', this.value)">
+                    Preço: <input type="number" value="${item.price}" oninput="updatePurchased(${index}, 'price', this.value)">
+                    <button onclick="removePurchased(${index})">Excluir</button>
+                </li>`;
+            });
+            document.getElementById('totalSpent').textContent = totalSpent.toFixed(2);
+            checkWarning();
+        }
+
+        function updatePurchased(index, field, value) {
+            purchased[index][field] = parseFloat(value) || 0;
+            saveData();
+            renderPurchased();
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            purchased.splice(index, 1);
+            saveData();
+            renderList();
+            renderPurchased();
+        }
+
+        function removePurchased(index) {
+            purchased.splice(index, 1);
+            saveData();
+            renderPurchased();
+        }
+
+        function updateBudget() {
+            budget = parseFloat(document.getElementById('budget').value) || 0;
+            saveData();
+            checkWarning();
+        }
+
+        function checkWarning() {
+            let warning = document.getElementById('warning');
+            if (totalSpent >= budget * 0.9) {
+                warning.textContent = 'Você está próximo do limite de gastos!';
+                warning.style.color = 'red';
+            } else {
+                warning.textContent = '';
+            }
+        }
+
+        function resetList() {
+            items = [];
+            purchased = [];
+            saveData();
+            renderList();
+            renderPurchased();
+        }
+
+        renderList();
+        renderPurchased();
+    </script>
+</body>
+</html>
